@@ -1,6 +1,8 @@
 const express = require('express');
 
 const db = require('../data/db-config.js');
+const Users = require('./user-model.js');
+
 
 const router = express.Router();
 
@@ -35,7 +37,8 @@ router.get('/:id', (req, res) => {
 router.post('/', (req, res) => {
   const userData = req.body;
 
-  db('users').insert(userData)
+  // db('users').insert(userData)
+  addUser(userData)
   .then(ids => {
     res.status(201).json({ created: ids[0] });
   })
@@ -77,4 +80,24 @@ router.delete('/:id', (req, res) => {
   });
 });
 
+// List all posts for a user
+router.get('/:id/posts', (req, res) => {
+  // .join('table with primary key', 'primary key', 'foreign key')
+  db('posts').join('users', 'posts.user_id', 'users.id')
+      .select('posts.contents', 'users.username as saidBy')
+      .where({user_id : req.params.id}).then((posts) => {
+    res.status(200).json(posts)
+  }).catch((error) => {
+    res.status(500).json({message:"Error Error Error"})
+  })
+})
+
+function addUser(user) {
+  return db('users').insert(user, 'id')
+}
+
 module.exports = router;
+
+// Separation of concerns principle 
+// - A unit should only have one reason to change
+// - Connected to the single responsibility principle
